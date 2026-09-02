@@ -1,8 +1,8 @@
 export type BookHolding = {
   libraryId: string;
   libraryName: string;
-  callNumber: string;
-  available: boolean;
+  callNumber?: string;
+  available: boolean | null;
 };
 
 export type BookSearchResult = {
@@ -15,6 +15,8 @@ export type BookSearchResult = {
   subjects: string[];
   keywords: string[];
   holdings: BookHolding[];
+  isbn13?: string;
+  detailUrl?: string;
 };
 
 export type BookSearchRequest = {
@@ -23,7 +25,8 @@ export type BookSearchRequest = {
 
 export type BookSearchResponse = {
   items: BookSearchResult[];
-  source: "mock" | "data4library";
+  source: "data4library";
+  queriedAt?: string;
 };
 
 export interface LibrarySearchService {
