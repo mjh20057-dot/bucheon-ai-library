@@ -33,6 +33,7 @@ export default function Home() {
     if (!onlyAvailable) return results;
     return results.filter((book) => book.holdings.some((holding) => holding.available));
   }, [onlyAvailable, results]);
+  const filteredOutCount = results.length - visibleResults.length;
 
   async function runSearch(nextQuery: string) {
     const normalizedQuery = nextQuery.trim();
@@ -144,18 +145,23 @@ export default function Home() {
                   {submittedQuery ? `‘${submittedQuery}’에 맞는 책` : "전체 추천 도서"}
                 </h2>
                 {!isLoading && !error && (
-                  <p className="mt-2 text-sm text-slate-500">시연 데이터에서 {visibleResults.length}권을 찾았어요.</p>
+                  <p className="mt-2 text-sm text-slate-500">
+                    시연 데이터에서 {visibleResults.length}권을 찾았어요.
+                    {onlyAvailable && (
+                      <span className="ml-2 font-semibold text-primary">대출 중인 도서 {filteredOutCount}권 제외</span>
+                    )}
+                  </p>
                 )}
               </div>
               <Button
                 aria-pressed={onlyAvailable}
-                className={onlyAvailable ? "border-primary bg-primary/5 text-primary" : ""}
+                className={onlyAvailable ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90" : ""}
                 onClick={() => setOnlyAvailable((current) => !current)}
                 type="button"
                 variant="outline"
               >
-                <SlidersHorizontal aria-hidden="true" />
-                대출 가능한 책만
+                {onlyAvailable ? <CheckCircle2 aria-hidden="true" /> : <SlidersHorizontal aria-hidden="true" />}
+                {onlyAvailable ? "대출 가능만 보는 중" : "대출 가능한 책만"}
               </Button>
             </div>
 
@@ -166,7 +172,11 @@ export default function Home() {
             ) : visibleResults.length === 0 ? (
               <StateMessage
                 title="조건에 맞는 책을 찾지 못했어요"
-                description="검색어를 조금 짧게 바꾸거나 다른 표현으로 다시 찾아보세요."
+                description={
+                  onlyAvailable
+                    ? "현재 바로 대출할 수 있는 책이 없어요. 필터를 끄면 대출 중인 책도 볼 수 있어요."
+                    : "검색어를 조금 짧게 바꾸거나 다른 표현으로 다시 찾아보세요."
+                }
               />
             ) : (
               <div className="mt-6 grid gap-5">
