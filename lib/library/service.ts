@@ -1,41 +1,23 @@
-import { mockBooks } from "./mock-data";
 import type { BookSearchRequest, BookSearchResponse, LibrarySearchService } from "./types";
 
-class MockLibrarySearchService implements LibrarySearchService {
+class Data4LibrarySearchService implements LibrarySearchService {
   async search(request: BookSearchRequest): Promise<BookSearchResponse> {
-    await new Promise((resolve) => setTimeout(resolve, 320));
-
-    const terms = request.query
-      .toLocaleLowerCase("ko")
-      .split(/\s+/)
-      .map((term) => term.replace(/[^0-9a-zA-Z가-힣]/g, ""))
-      .filter((term) => term.length > 0);
-
-    if (terms.length === 0) {
-      return { items: mockBooks, source: "mock" };
+    const query = request.query.trim();
+    if (!query) {
+      throw new Error("검색어를 입력해 주세요.");
     }
 
-    const scored = mockBooks
-      .map((book) => {
-        const searchableText = [
-          book.title,
-          book.author,
-          book.description,
-          ...book.subjects,
-          ...book.keywords,
-        ]
-          .join(" ")
-          .toLocaleLowerCase("ko");
+    const response = await fetch(`/api/library-search?q=${encodeURIComponent(query)}`, {
+      headers: { accept: "application/json" },
+    });
 
-        const score = terms.reduce((total, term) => total + (searchableText.includes(term) ? 1 : 0), 0);
-        return { book, score };
-      })
-      .filter(({ score }) => score > 0)
-      .sort((a, b) => b.score - a.score)
-      .map(({ book }) => book);
+    const body = (await response.json().catch(() => null)) as (BookSearchResponse & { error?: string }) | null;
+    if (!response.ok || !body) {
+      throw new Error(body?.error || "정보나루 검색 결과를 불러오지 못했어요.");
+    }
 
-    return { items: scored, source: "mock" };
+    return body;
   }
 }
 
-export const mockLibrarySearchService: LibrarySearchService = new MockLibrarySearchService();
+export const librarySearchService: LibrarySearchService = new Data4LibrarySearchService();
