@@ -26,7 +26,7 @@ export const mockBooks: BookSearchResult[] = [
     keywords: ["소설", "따뜻", "마음", "성장", "공감", "짧은"],
     holdings: [
       { libraryId: "sangdong", libraryName: "상동도서관", callNumber: "813.7-손66ㅇ", available: false },
-      { libraryId: "kkumyeoul", libraryName: "꿈여울도서관", callNumber: "813.7-손66ㅇ", available: true },
+      { libraryId: "kkumyeoul", libraryName: "꿈여울도서관", callNumber: "813.7-손66ㅇ", available: false },
     ],
   },
   {
