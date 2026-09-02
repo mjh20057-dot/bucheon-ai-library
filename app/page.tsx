@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { mockLibrarySearchService } from "@/lib/library/service";
+import { librarySearchService } from "@/lib/library/service";
 import type { BookSearchResult } from "@/lib/library/types";
 
 const suggestedQueries = ["우주를 쉽게 설명한 책", "마음이 따뜻해지는 소설", "돈 공부 입문서"];
@@ -44,7 +44,7 @@ export default function Home() {
     setError("");
 
     try {
-      const response = await mockLibrarySearchService.search({ query: normalizedQuery });
+      const response = await librarySearchService.search({ query: normalizedQuery });
       setResults(response.items);
     } catch {
       setResults([]);
@@ -72,8 +72,8 @@ export default function Home() {
               <p className="text-xs text-muted-foreground">대화하듯 찾는 도서검색</p>
             </div>
           </div>
-          <Badge className="border-amber-200 bg-amber-50 px-3 py-1 text-amber-800" variant="outline">
-            시연 데이터
+          <Badge className="border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-800" variant="outline">
+            정보나루 API 연동
           </Badge>
         </div>
       </header>
@@ -146,9 +146,9 @@ export default function Home() {
                 </h2>
                 {!isLoading && !error && (
                   <p className="mt-2 text-sm text-slate-500">
-                    시연 데이터에서 {visibleResults.length}권을 찾았어요.
+                    정보나루에서 {visibleResults.length}권을 찾았어요.
                     {onlyAvailable && (
-                      <span className="ml-2 font-semibold text-primary">대출 중인 도서 {filteredOutCount}권 제외</span>
+                      <span className="ml-2 font-semibold text-primary">대출 가능이 확인되지 않은 도서 {filteredOutCount}권 제외</span>
                     )}
                   </p>
                 )}
@@ -191,8 +191,8 @@ export default function Home() {
 
       <footer className="border-t border-border bg-slate-950 px-5 py-6 text-slate-300">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
-          <p>현재 화면의 도서와 대출 정보는 기능 검증을 위한 시연 데이터입니다.</p>
-          <p className="text-slate-400">실제 정보는 Open API 연계 후 제공됩니다.</p>
+          <p>도서와 소장 정보는 도서관 정보나루 Open API에서 제공합니다.</p>
+          <p className="text-slate-400">대출 가능 여부는 조회 시점 기준입니다.</p>
         </div>
       </footer>
     </main>
@@ -243,10 +243,12 @@ function BookResultCard({ book }: { book: BookSearchResult }) {
             {book.author} · {book.publisher} · {book.publishedYear}
           </p>
           <p className="mt-5 max-w-2xl text-[0.95rem] leading-7 text-slate-600">{book.description}</p>
-          <button className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline" type="button">
-            책 정보 자세히 보기
-            <ChevronRight aria-hidden="true" className="size-4" />
-          </button>
+          {book.detailUrl && (
+            <a className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline" href={book.detailUrl} rel="noreferrer" target="_blank">
+              책 정보 자세히 보기
+              <ChevronRight aria-hidden="true" className="size-4" />
+            </a>
+          )}
         </div>
 
         <div className="border-t border-slate-200 bg-slate-50/80 p-5 md:border-l md:border-t-0 sm:p-6">
@@ -254,20 +256,24 @@ function BookResultCard({ book }: { book: BookSearchResult }) {
             <h4 className="font-bold text-slate-900">소장 도서관</h4>
             <span className="text-xs font-medium text-slate-500">{book.holdings.length}곳</span>
           </div>
-          <ul className="mt-4 space-y-3">
+          {book.holdings.length === 0 ? (
+            <p className="mt-4 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm leading-6 text-slate-600">
+              부천시 소장 도서관을 찾지 못했어요.
+            </p>
+          ) : <ul className="mt-4 space-y-3">
             {book.holdings.map((holding) => (
               <li className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3" key={holding.libraryId}>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-slate-800">{holding.libraryName}</p>
-                  <p className="mt-1 text-xs text-slate-500">청구기호 {holding.callNumber}</p>
+                  <p className="mt-1 text-xs text-slate-500">{holding.callNumber ? `청구기호 ${holding.callNumber}` : "소장 여부 확인됨"}</p>
                 </div>
-                <span className={`inline-flex shrink-0 items-center gap-1 text-xs font-bold ${holding.available ? "text-emerald-700" : "text-amber-700"}`}>
-                  {holding.available ? <CheckCircle2 aria-hidden="true" className="size-4" /> : <Clock3 aria-hidden="true" className="size-4" />}
-                  {holding.available ? "대출 가능" : "대출 중"}
+                <span className={`inline-flex shrink-0 items-center gap-1 text-xs font-bold ${holding.available === true ? "text-emerald-700" : holding.available === false ? "text-amber-700" : "text-slate-500"}`}>
+                  {holding.available === true ? <CheckCircle2 aria-hidden="true" className="size-4" /> : <Clock3 aria-hidden="true" className="size-4" />}
+                  {holding.available === true ? "대출 가능" : holding.available === false ? "대출 중" : "확인 안 됨"}
                 </span>
               </li>
             ))}
-          </ul>
+          </ul>}
         </div>
       </div>
     </article>
